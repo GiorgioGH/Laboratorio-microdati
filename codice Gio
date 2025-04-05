@@ -1,0 +1,111 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Caricamento dati
+df = pd.read_excel('C:/Users/giorg/Desktop/df_incidenza_lavoratori_xlsx.xlsx')
+
+# Impostazioni comuni per i grafici
+colors = {'M': 'blue', 'F': 'red'}
+labels = {'M': 'Uomini', 'F': 'Donne'}
+
+# 1. Confronto tra l'incidenza dell'occupazione maschile e femminile nel contratto a tempo determinato
+plt.figure(figsize=(10, 6))
+for genere in ['M', 'F']:
+    subset = df[df['codgenere'] == genere]
+    plt.plot(subset['anno'], subset['incidenza_tempo_determinato'], marker='o', 
+             color=colors[genere], label=labels[genere])
+
+plt.title('Incidenza contratti a tempo determinato per genere')
+plt.xlabel('Anno')
+plt.ylabel('Incidenza (%)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig('confronto_tempo_determinato.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# 2. Confronto tra l'incidenza dell'occupazione maschile e femminile nel contratto a tempo indeterminato
+plt.figure(figsize=(10, 6))
+for genere in ['M', 'F']:
+    subset = df[df['codgenere'] == genere]
+    plt.plot(subset['anno'], subset['incidenza_tempo_indeterminato'], marker='o', 
+             color=colors[genere], label=labels[genere])
+
+plt.title('Incidenza contratti a tempo indeterminato per genere')
+plt.xlabel('Anno')
+plt.ylabel('Incidenza (%)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig('confronto_tempo_indeterminato.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# 3. Confronto tra l'incidenza dell'occupazione maschile e femminile nel contratto a tempo parziale
+plt.figure(figsize=(10, 6))
+for genere in ['M', 'F']:
+    subset = df[df['codgenere'] == genere]
+    plt.plot(subset['anno'], subset['incidenza_tempo_parziale'], marker='o', 
+             color=colors[genere], label=labels[genere])
+
+plt.title('Incidenza contratti a tempo parziale per genere')
+plt.xlabel('Anno')
+plt.ylabel('Incidenza (%)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig('confronto_tempo_parziale.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# 4. Confronto tra l'incidenza dell'occupazione maschile e femminile nel contratto a tempo parziale nell'ultimo anno
+plt.figure(figsize=(10, 6))
+ultimo_anno = df['anno'].max()
+df_ultimo_anno = df[df['anno'] == ultimo_anno]
+
+barplot = plt.bar(df_ultimo_anno['codgenere'], df_ultimo_anno['incidenza_tempo_parziale'], 
+                 color=[colors[g] for g in df_ultimo_anno['codgenere']])
+
+# Aggiunta di etichette con i valori sopra le barre
+for bar in barplot:
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2., height + 0.5,
+             f'{height:.1f}%', ha='center', va='bottom')
+
+plt.title(f'Incidenza contratti a tempo parziale per genere nel {ultimo_anno}')
+plt.xlabel('Genere')
+plt.ylabel('Incidenza (%)')
+plt.xticks([0, 1], ['Uomini', 'Donne'])
+plt.grid(True, axis='y')
+plt.tight_layout()
+plt.savefig('confronto_tempo_parziale_ultimo_anno.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# Tabella di riepilogo dell'ultimo anno disponibile
+print("\nTabella di riepilogo dell'ultimo anno disponibile:")
+pivot_table = df_ultimo_anno.pivot(index='codgenere', columns=None, 
+                                  values=['incidenza_tempo_determinato', 
+                                         'incidenza_tempo_indeterminato', 
+                                         'incidenza_tempo_parziale'])
+pivot_table.index = ['Uomini' if x == 'M' else 'Donne' for x in pivot_table.index]
+pivot_table.columns = ['Tempo Determinato (%)', 'Tempo Indeterminato (%)', 'Tempo Parziale (%)']
+print(pivot_table)
+
+# Analisi delle differenze di genere
+diff_df = df.pivot_table(index='anno', 
+                        columns='codgenere', 
+                        values=['incidenza_tempo_determinato', 
+                               'incidenza_tempo_indeterminato', 
+                               'incidenza_tempo_parziale'])
+
+# Calcolo delle differenze (F-M)
+diff_tempo_det = diff_df['incidenza_tempo_determinato']['F'] - diff_df['incidenza_tempo_determinato']['M']
+diff_tempo_indet = diff_df['incidenza_tempo_indeterminato']['F'] - diff_df['incidenza_tempo_indeterminato']['M']
+diff_tempo_parziale = diff_df['incidenza_tempo_parziale']['F'] - diff_df['incidenza_tempo_parziale']['M']
+
+print("\nDifferenze di genere nell'incidenza (Donne - Uomini):")
+diff_table = pd.DataFrame({
+    'Diff. Tempo Determinato (p.p.)': diff_tempo_det,
+    'Diff. Tempo Indeterminato (p.p.)': diff_tempo_indet,
+    'Diff. Tempo Parziale (p.p.)': diff_tempo_parziale
+})
+print(diff_table)
